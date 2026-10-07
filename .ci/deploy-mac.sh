@@ -1,0 +1,70 @@
+#!/bin/sh -ex
+
+# shellcheck disable=SC2086
+cd build || exit 1
+
+cd bin
+mkdir -p "rpcs3.app/Contents/Resources/vulkan/icd.d" || true
+wget https://github.com/KhronosGroup/MoltenVK/releases/download/v1.4.2/MoltenVK-macos-privateapi.tar
+tar -xvf MoltenVK-macos-privateapi.tar
+cp "MoltenVK/MoltenVK/dynamic/dylib/macOS/libMoltenVK.dylib" "rpcs3.app/Contents/Frameworks/libMoltenVK.dylib"
+cp "MoltenVK/MoltenVK/dynamic/dylib/macOS/MoltenVK_icd.json" "rpcs3.app/Contents/Resources/vulkan/icd.d/MoltenVK_icd.json"
+sed -i '' "s/.\//..\/..\/..\/Frameworks\//g" "rpcs3.app/Contents/Resources/vulkan/icd.d/MoltenVK_icd.json"
+
+rm -rf "rpcs3.app/Contents/Frameworks/QtPdf.framework" \
+"rpcs3.app/Contents/Frameworks/QtQml.framework" \
+"rpcs3.app/Contents/Frameworks/QtQmlModels.framework" \
+"rpcs3.app/Contents/Frameworks/QtQuick.framework" \
+"rpcs3.app/Contents/Frameworks/QtVirtualKeyboard.framework" \
+"rpcs3.app/Contents/Plugins/platforminputcontexts" \
+"rpcs3.app/Contents/Plugins/virtualkeyboard" \
+"rpcs3.app/Contents/Resources/git" || true
+
+../../.ci/optimize-mac.sh rpcs3.app
+
+# Download translations
+mkdir -p "rpcs3.app/Contents/translations"
+ZIP_URL="https://github.com/RPCS3/rpcs3_translations/releases/latest/download/RPCS3-languages.zip"
+echo "Downloading translations from: $ZIP_URL"
+if curl -fsSL --retry 3 --retry-delay 60 "$ZIP_URL" -o "translations.zip"; then
+  echo "Successfully downloaded translations."
+  if unzip -o translations.zip -d "rpcs3.app/Contents/translations" >/dev/null 2>&1; then
+    rm -f translations.zip
+  else
+    echo "Failed to extract translations.zip. Continuing without translations."
+    rm -f translations.zip
+  fi
+else
+  echo "Warning: Failed to download translations. Skipping..."
+fi
+
+# Copy Qt translations manually
+QT_TRANS="$WORKDIR/qt-downloader/$QT_VER/clang_64/translations"
+cp $QT_TRANS/qt_*.qm rpcs3.app/Contents/translations
+cp $QT_TRANS/qtbase_*.qm rpcs3.app/Contents/translations
+cp $QT_TRANS/qtmultimedia_*.qm rpcs3.app/Contents/translations
+rm -f rpcs3.app/Contents/translations/qt_help_*.qm || true
+
+# Need to do this rename hack due to case insensitive filesystem
+mv rpcs3.app RPCS3_.app
+mv RPCS3_.app RPCS3.app
+
+# NOTE: "--deep" is deprecated
+codesign --deep -fs - RPCS3.app
+
+echo "[InternetShortcut]" > Quickstart.url
+echo "URL=https://rpcs3.net/quickstart" >> Quickstart.url
+echo "IconIndex=0" >> Quickstart.url
+
+if [ "$(arch)" = "arm64" ]; then
+  ARCHIVE_FILEPATH="$BUILD_ARTIFACTSTAGINGDIRECTORY/rpcs3-v${LVER}_macos_aarch64.7z"
+else
+  ARCHIVE_FILEPATH="$BUILD_ARTIFACTSTAGINGDIRECTORY/rpcs3-v${LVER}_macos.7z"
+fi
+7z a -mx9 "$ARCHIVE_FILEPATH" RPCS3.app Quickstart.url
+FILESIZE=$(stat -f %z "$ARCHIVE_FILEPATH")
+SHA256SUM=$(shasum -a 256 "$ARCHIVE_FILEPATH" | awk '{ print $1 }')
+
+cd ..
+echo "${SHA256SUM};${FILESIZE}B" > "$RELEASE_MESSAGE"
+cd bin
