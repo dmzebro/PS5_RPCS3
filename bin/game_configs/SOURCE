@@ -1,0 +1,11 @@
+config_database.json is RPCS3's per-game configuration database as its Qt
+application downloads it (rpcs3qt/config_database.cpp): the response of
+https://api.rpcs3.net/config/?api=v1, taken 2026-09-29 (its timestamp field:
+1790656172), sha256
+f7f8965ee1c1d61a48042485862558e107456c16346b4aceab7a4854e2cff9b6;
+2203 games, each with the settings RPCS3 recommends for it.
+
+The libretro core stages it as its config folder's config_database.json and
+answers RPCS3's get_database_config with a game's entry (rpcs3/libretro/
+libretro_game_configs.h). To refresh it, take the same response again and
+record its date, timestamp and hash here.
