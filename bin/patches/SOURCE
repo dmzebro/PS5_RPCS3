@@ -1,0 +1,12 @@
+patch.yml is RPCS3's game patch database as RPCS3's patch manager downloads it:
+the "patch" field of https://rpcs3.net/compatibility?patch&api=v1&v=1.2
+(patch engine version 1.2), taken 2026-09-29,
+sha256 834b5762e10074d0060a009f7b01ec16e03d121f62fbd4a78af837b889908d1f.
+
+The libretro core stages it as its patches/patch.yml (rpcs3/libretro/libretro_patches.h).
+To refresh it, take the same field again and record its date and hash here.
+
+<serial>_patch.yml files are patches of this fork's own for game versions the
+database lacks, in the same format; RPCS3 reads each for the game with that
+serial. BLES00229_patch.yml: GTA IV 1.00's frame lock, found in the game's
+code (the render thread's frame limiter reads it).

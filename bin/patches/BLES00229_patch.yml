@@ -1,0 +1,17 @@
+Version: 1.2
+
+# GTA IV 1.00, which RPCS3's patch database has no frame-rate patch for (it
+# has one for 1.08, at another address). The render thread's frame limiter
+# waits, 30 us at a time, until the frame lock times 1/60 s has passed since
+# the last frame, and skips itself when the frame lock is 0; the frame lock is
+# the word below, 2 as the game ships it.
+PPU-0a18dee1ce02dbc1da578fdf11a8dbaa37861e70:
+  "Unlock FPS":
+    Games:
+      "Grand Theft Auto IV (Grand Theft Auto 4)":
+        BLES00229: [ 01.00 ]
+    Author: "Mihawk"
+    Notes: "Set Framelimit to 60 FPS otherwise loading screen layers will go too fast."
+    Patch Version: 1.0
+    Patch:
+      - [ be32, 0x0113b9f4, 0x00000000 ]
