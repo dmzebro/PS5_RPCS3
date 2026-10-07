@@ -3,7 +3,7 @@ RPCS3
 
 > [!IMPORTANT]
 > **This is a fork for the PlayStation 5 (a libretro core in
-> [PS5_RetroArch](https://github.com/mihawk-99/PS5_RetroArch)), not an official
+> [PS5_RetroArch](https://github.com/dmzebro/PS5_RetroArch)), not an official
 > RPCS3 build; please do not report its problems to the RPCS3 team.**
 >
 > **No binaries of this fork are distributed, and none will be: you must compile
